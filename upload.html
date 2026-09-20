@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متجر Voxy - رفع لعبة جديدة</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background-color: #1e1e1e;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        h1 { color: #00adb5; text-align: center; margin-top: 0; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: #b0b0b0; font-size: 14px; }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #444;
+            background-color: #2a2a2a;
+            color: #fff;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        textarea { resize: vertical; height: 100px; }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #00adb5;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .btn:hover { background-color: #007e85; }
+        .back-link { display: block; text-align: center; margin-top: 15px; color: #00adb5; text-decoration: none; }
+        .msg { text-align: center; margin-top: 15px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>اقترح / ارفع لعبة جديدة</h1>
+        <form id="upload-form">
+            <div class="form-group">
+                <label>اسم اللعبة</label>
+                <input type="text" id="game-name" placeholder="مثال: مغامرات الحديقة" required>
+            </div>
+            <div class="form-group">
+                <label>الوصف المختصر</label>
+                <input type="text" id="game-short-desc" placeholder="وصف في سطر واحد" required>
+            </div>
+            <div class="form-group">
+                <label>وصف اللعبة الكامل</label>
+                <textarea id="game-desc" placeholder="اشرح قريقة اللعب..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label>إصدار اللعبة</label>
+                <input type="text" id="game-version" placeholder="v1.0" required>
+            </div>
+            <div class="form-group">
+                <label>رابط التحميل من ميديا فاير</label>
+                <input type="text" id="game-link" placeholder="https://www.mediafire.com/..." required>
+            </div>
+            <div class="form-group">
+                <label>أيقونة اللعبة (صورة)</label>
+                <input type="file" id="game-icon" accept="image/*" required>
+            </div>
+            <button type="submit" class="btn">إرسال للمراجعة والإدارة</button>
+        </form>
+        <div class="msg" id="upload-msg"></div>
+        <a href="store.html" class="back-link">العودة إلى المتجر</a>
+    </div>
+
+    <script>
+        const form = document.getElementById('upload-form');
+        const msg = document.getElementById('upload-msg');
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('game-name').value;
+            const shortDesc = document.getElementById('game-short-desc').value;
+            const desc = document.getElementById('game-desc').value;
+            const version = document.getElementById('game-version').value;
+            const link = document.getElementById('game-link').value;
+            const iconFile = document.getElementById('game-icon').files[0];
+            const uploader = localStorage.getItem('voxy_username') || 'مجهول';
+
+            if (iconFile) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const iconBase64 = event.target.result;
+
+                    // تخزين اللعبة في قائمة الألعاب المعلقة (قيد المراجعة للأدمين)
+                    let pendingGames = JSON.parse(localStorage.getItem('voxy_pending_games')) || [];
+                    const newGame = {
+                        id: Date.now(),
+                        name, shortDesc, desc, version, link,
+                        icon: iconBase64,
+                        uploader
+                    };
+
+                    pendingGames.push(newGame);
+                    localStorage.setItem('voxy_pending_games', JSON.stringify(pendingGames));
+
+                    msg.style.color = '#51cf66';
+                    msg.textContent = 'تم إرسال اللعبة للأدمين بنجاح! في انتظار الموافقة والنشر.';
+
+                    setTimeout(() => {
+                        window.location.href = 'store.html';
+                    }, 2000);
+                };
+                reader.readAsDataURL(iconFile);
+            }
+        });
+    </script>
+</body>
+</html>

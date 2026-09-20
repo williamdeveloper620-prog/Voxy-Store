@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متجر Voxy - تسجيل الحساب</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #1e1e1e;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            width: 320px;
+            text-align: center;
+        }
+        h2 { color: #00adb5; margin-bottom: 20px; }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #444;
+            background-color: #2a2a2a;
+            color: #fff;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #00adb5;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover { background-color: #007e85; }
+        .message { margin-top: 15px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>متجر Voxy</h2>
+        <form id="signup-form">
+            <input type="text" id="username" placeholder="اسم المستخدم" required>
+            <input type="password" id="password" placeholder="كلمة المرور" required>
+            <button type="submit">دخول / إنشاء حساب</button>
+        </form>
+        <div class="message" id="msg"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('signup-form');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const msg = document.getElementById('msg');
+
+        window.onload = function() {
+            const savedUser = localStorage.getItem('voxy_username');
+            const role = localStorage.getItem('voxy_role');
+            if (savedUser) {
+                if (role === 'super_admin' || role === 'admin') {
+                    window.location.href = 'admin.html';
+                } else {
+                    window.location.href = 'store.html';
+                }
+            }
+        };
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value;
+
+            let role = 'user';
+
+            // التحقق من بيانات السوبر أدمين السرية
+            if (username === 'AdminSuper123789' && password === 'adminsupersuper543×513×876×943Secret') {
+                role = 'super_admin';
+            } else {
+                // التحقق هل هو أدمين عادي تم ترقيته مسبقاً؟
+                let admins = JSON.parse(localStorage.getItem('voxy_admins')) || [];
+                if (admins.includes(username)) {
+                    role = 'admin';
+                } else {
+                    // حفظ المستخدم الجديد في قائمة المستخدمين لتظهر عند الأدمين
+                    let users = JSON.parse(localStorage.getItem('voxy_users_list')) || [];
+                    if (!users.includes(username)) {
+                        users.push(username);
+                        localStorage.setItem('voxy_users_list', JSON.stringify(users));
+                    }
+                }
+            }
+
+            // حفظ بيانات الجلسة الحالية
+            localStorage.setItem('voxy_username', username);
+            localStorage.setItem('voxy_role', role);
+
+            msg.style.color = '#51cf66';
+            msg.textContent = 'تم تسجيل الدخول بنجاح، جاري التحويل...';
+
+            setTimeout(() => {
+                if (role === 'super_admin' || role === 'admin') {
+                    window.location.href = 'admin.html';
+                } else {
+                    window.location.href = 'store.html';
+                }
+            }, 1000);
+        });
+    </script>
+
+</body>
+</html>

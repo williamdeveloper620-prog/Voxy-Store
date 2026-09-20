@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متجر Voxy للألعاب</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        .container {
+            width: 100%;
+            max-width: 950px;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #1e1e1e;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        h1 { margin: 0; font-size: 24px; color: #00adb5; }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .btn {
+            padding: 8px 14px;
+            background-color: #00adb5;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            display: inline-block;
+        }
+        .btn:hover { background-color: #007e85; }
+        .btn-admin { background-color: #339af0; }
+        .btn-admin:hover { background-color: #1c7ed6; }
+        .btn-danger { background-color: #ff6b6b; }
+        .btn-danger:hover { background-color: #e05555; }
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+        }
+        .game-card {
+            background-color: #1e1e1e;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .game-card img {
+            width: 100px;
+            height: 100px;
+            border-radius: 10px;
+            object-fit: cover;
+            margin-bottom: 10px;
+        }
+        .game-title { font-size: 18px; margin: 10px 0 5px 0; font-weight: bold; }
+        .game-meta { font-size: 12px; color: #aaa; margin-bottom: 15px; }
+        .download-btn {
+            margin-top: auto;
+            width: 100%;
+            background-color: #51cf66;
+            color: #121212;
+            font-weight: bold;
+            padding: 10px 0;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+        .download-btn:hover { background-color: #40c057; }
+        .empty-msg {
+            text-align: center;
+            color: #777;
+            font-size: 18px;
+            grid-column: 1 / -1;
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>🎮 متجر Voxy للألعاب</h1>
+            <div class="user-info">
+                <span id="welcome-text">مرحباً!</span>
+                <!-- زر الأدمين بيظهر بس لو الحساب أدمين -->
+                <a href="admin.html" id="admin-btn" class="btn btn-admin" style="display: none;">⚙️ لوحة التحكم</a>
+                <a href="upload.html" class="btn">➕ رفع لعبة</a>
+                <button class="btn btn-danger" onclick="logout()">تسجيل خروج</button>
+            </div>
+        </header>
+
+        <div class="games-grid" id="games-container">
+            <!-- الألعاب المقبولة ستظهر هنا -->
+        </div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            const username = localStorage.getItem('voxy_username');
+            const role = localStorage.getItem('voxy_role');
+
+            if (!username) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            document.getElementById('welcome-text').textContent = `أهلاً، ${username}`;
+
+            // إظهار زر لوحة التحكم للأدمين والسوبر أدمين فقط
+            if (role === 'admin' || role === 'super_admin') {
+                document.getElementById('admin-btn').style.display = 'inline-block';
+            }
+
+            loadGames();
+        };
+
+        function loadGames() {
+            const container = document.getElementById('games-container');
+            const games = JSON.parse(localStorage.getItem('voxy_games')) || [];
+
+            if (games.length === 0) {
+                container.innerHTML = `<div class="empty-msg">لا توجد ألعاب متوفرة في المتجر حالياً.<br>قم برفع لعبتك الأولى ومراجعتها من الأدمين!</div>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            games.forEach(game => {
+                container.innerHTML += `
+                    <div class="game-card">
+                        <img src="${game.icon}" alt="${game.name}">
+                        <div class="game-title">${game.name}</div>
+                        <div class="game-meta">المطور: ${game.uploader} | الإصدار: ${game.version}</div>
+                        <a href="${game.link}" target="_blank" class="download-btn">📥 تحميل اللعبة</a>
+                    </div>
+                `;
+            });
+        }
+
+        function logout() {
+            localStorage.removeItem('voxy_username');
+            localStorage.removeItem('voxy_role');
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>
