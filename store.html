@@ -17,10 +17,7 @@
             min-height: 100vh;
             box-sizing: border-box;
         }
-        .container {
-            width: 100%;
-            max-width: 950px;
-        }
+        .container { width: 100%; max-width: 950px; }
         header {
             display: flex;
             justify-content: space-between;
@@ -92,6 +89,9 @@
             padding: 40px;
         }
     </style>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -100,7 +100,6 @@
             <h1>🎮 متجر Voxy للألعاب</h1>
             <div class="user-info">
                 <span id="welcome-text">مرحباً!</span>
-                <!-- زر الأدمين بيظهر بس لو الحساب أدمين -->
                 <a href="admin.html" id="admin-btn" class="btn btn-admin" style="display: none;">⚙️ لوحة التحكم</a>
                 <a href="upload.html" class="btn">➕ رفع لعبة</a>
                 <button class="btn btn-danger" onclick="logout()">تسجيل خروج</button>
@@ -108,11 +107,22 @@
         </header>
 
         <div class="games-grid" id="games-container">
-            <!-- الألعاب المقبولة ستظهر هنا -->
+            <div class="empty-msg">جاري تحميل الألعاب من السحابة...</div>
         </div>
     </div>
 
     <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAIU9w0_A9ba4agXyFIqAFZ_YpWV06sQGo",
+            authDomain: "voxy-store.firebaseapp.com",
+            projectId: "voxy-store",
+            storageBucket: "voxy-store.firebasestorage.app",
+            messagingSenderId: "21920174610",
+            appId: "1:21920174610:web:29eeff5eda3aa5e4d6becb"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
         window.onload = function() {
             const username = localStorage.getItem('voxy_username');
             const role = localStorage.getItem('voxy_role');
@@ -124,7 +134,6 @@
 
             document.getElementById('welcome-text').textContent = `أهلاً، ${username}`;
 
-            // إظهار زر لوحة التحكم للأدمين والسوبر أدمين فقط
             if (role === 'admin' || role === 'super_admin') {
                 document.getElementById('admin-btn').style.display = 'inline-block';
             }
@@ -134,23 +143,25 @@
 
         function loadGames() {
             const container = document.getElementById('games-container');
-            const games = JSON.parse(localStorage.getItem('voxy_games')) || [];
+            
+            db.collection('approved_games').onSnapshot(snapshot => {
+                if (snapshot.empty) {
+                    container.innerHTML = `<div class="empty-msg">لا توجد ألعاب متوفرة حالياً.<br>قم برفع لعبتك الأولى ومراجعتها من الأدمين!</div>`;
+                    return;
+                }
 
-            if (games.length === 0) {
-                container.innerHTML = `<div class="empty-msg">لا توجد ألعاب متوفرة في المتجر حالياً.<br>قم برفع لعبتك الأولى ومراجعتها من الأدمين!</div>`;
-                return;
-            }
-
-            container.innerHTML = '';
-            games.forEach(game => {
-                container.innerHTML += `
-                    <div class="game-card">
-                        <img src="${game.icon}" alt="${game.name}">
-                        <div class="game-title">${game.name}</div>
-                        <div class="game-meta">المطور: ${game.uploader} | الإصدار: ${game.version}</div>
-                        <a href="${game.link}" target="_blank" class="download-btn">📥 تحميل اللعبة</a>
-                    </div>
-                `;
+                container.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const game = doc.data();
+                    container.innerHTML += `
+                        <div class="game-card">
+                            <img src="${game.icon}" alt="${game.name}">
+                            <div class="game-title">${game.name}</div>
+                            <div class="game-meta">المطور: ${game.uploader} | الإصدار: ${game.version}</div>
+                            <a href="${game.link}" target="_blank" class="download-btn">📥 تحميل اللعبة</a>
+                        </div>
+                    `;
+                });
             });
         }
 

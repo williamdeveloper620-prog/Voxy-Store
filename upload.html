@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>متجر Voxy - رفع لعبة جديدة</title>
+    <title>رفع لعبة جديدة - متجر Voxy</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -12,124 +12,125 @@
             margin: 0;
             padding: 20px;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
             min-height: 100vh;
             box-sizing: border-box;
         }
-        .container {
-            width: 100%;
-            max-width: 600px;
+        .form-card {
             background-color: #1e1e1e;
             padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 400px;
         }
-        h1 { color: #00adb5; text-align: center; margin-top: 0; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; color: #b0b0b0; font-size: 14px; }
-        input[type="text"], textarea {
+        h2 { color: #00adb5; text-align: center; margin-bottom: 20px; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-size: 14px; color: #ccc; }
+        input {
             width: 100%;
             padding: 10px;
-            border: 1px solid #444;
+            border: 1px solid #333;
+            border-radius: 5px;
             background-color: #2a2a2a;
             color: #fff;
-            border-radius: 5px;
             box-sizing: border-box;
         }
-        textarea { resize: vertical; height: 100px; }
-        .btn {
+        button {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             background-color: #00adb5;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
-            font-weight: bold;
             margin-top: 10px;
         }
-        .btn:hover { background-color: #007e85; }
-        .back-link { display: block; text-align: center; margin-top: 15px; color: #00adb5; text-decoration: none; }
-        .msg { text-align: center; margin-top: 15px; font-size: 14px; }
+        button:hover { background-color: #007e85; }
+        .back-btn {
+            display: block;
+            text-align: center;
+            margin-top: 15px;
+            color: #aaa;
+            text-decoration: none;
+            font-size: 13px;
+        }
     </style>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
-    <div class="container">
-        <h1>اقترح / ارفع لعبة جديدة</h1>
+    <div class="form-card">
+        <h2>🚀 رفع لعبة جديدة</h2>
         <form id="upload-form">
-            <div class="form-group">
-                <label>اسم اللعبة</label>
-                <input type="text" id="game-name" placeholder="مثال: مغامرات الحديقة" required>
+            <div class="input-group">
+                <label>اسم اللعبة:</label>
+                <input type="text" id="game-name" placeholder="أدخل اسم اللعبة" required>
             </div>
-            <div class="form-group">
-                <label>الوصف المختصر</label>
-                <input type="text" id="game-short-desc" placeholder="وصف في سطر واحد" required>
+            <div class="input-group">
+                <label>رابط اللعبة (MediaFire):</label>
+                <input type="url" id="game-link" placeholder="https://www.mediafire.com/file/..." required>
             </div>
-            <div class="form-group">
-                <label>وصف اللعبة الكامل</label>
-                <textarea id="game-desc" placeholder="اشرح قريقة اللعب..." required></textarea>
+            <div class="input-group">
+                <label>رابط صور/أيقونة اللعبة (URL):</label>
+                <input type="url" id="game-icon" placeholder="https://..." required>
             </div>
-            <div class="form-group">
-                <label>إصدار اللعبة</label>
-                <input type="text" id="game-version" placeholder="v1.0" required>
+            <div class="input-group">
+                <label>رقم الإصدار:</label>
+                <input type="text" id="game-version" placeholder="مثال: 1.0.0" value="1.0.0" required>
             </div>
-            <div class="form-group">
-                <label>رابط التحميل من ميديا فاير</label>
-                <input type="text" id="game-link" placeholder="https://www.mediafire.com/..." required>
-            </div>
-            <div class="form-group">
-                <label>أيقونة اللعبة (صورة)</label>
-                <input type="file" id="game-icon" accept="image/*" required>
-            </div>
-            <button type="submit" class="btn">إرسال للمراجعة والإدارة</button>
+            <button type="submit" id="submit-btn">إرسال للمراجعة</button>
         </form>
-        <div class="msg" id="upload-msg"></div>
-        <a href="store.html" class="back-link">العودة إلى المتجر</a>
+        <a href="store.html" class="back-btn">إلغاء والعودة للمتجر</a>
     </div>
 
     <script>
-        const form = document.getElementById('upload-form');
-        const msg = document.getElementById('upload-msg');
+        const firebaseConfig = {
+            apiKey: "AIzaSyAIU9w0_A9ba4agXyFIqAFZ_YpWV06sQGo",
+            authDomain: "voxy-store.firebaseapp.com",
+            projectId: "voxy-store",
+            storageBucket: "voxy-store.firebasestorage.app",
+            messagingSenderId: "21920174610",
+            appId: "1:21920174610:web:29eeff5eda3aa5e4d6becb"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-        form.addEventListener('submit', function(e) {
+        document.getElementById('upload-form').addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            const name = document.getElementById('game-name').value;
-            const shortDesc = document.getElementById('game-short-desc').value;
-            const desc = document.getElementById('game-desc').value;
-            const version = document.getElementById('game-version').value;
-            const link = document.getElementById('game-link').value;
-            const iconFile = document.getElementById('game-icon').files[0];
-            const uploader = localStorage.getItem('voxy_username') || 'مجهول';
+            const username = localStorage.getItem('voxy_username');
+            if (!username) {
+                alert('يرجى تسجيل الدخول أولاً!');
+                window.location.href = 'index.html';
+                return;
+            }
 
-            if (iconFile) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const iconBase64 = event.target.result;
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.textContent = 'جاري الإرسال...';
 
-                    // تخزين اللعبة في قائمة الألعاب المعلقة (قيد المراجعة للأدمين)
-                    let pendingGames = JSON.parse(localStorage.getItem('voxy_pending_games')) || [];
-                    const newGame = {
-                        id: Date.now(),
-                        name, shortDesc, desc, version, link,
-                        icon: iconBase64,
-                        uploader
-                    };
+            const gameData = {
+                name: document.getElementById('game-name').value.trim(),
+                link: document.getElementById('game-link').value.trim(),
+                icon: document.getElementById('game-icon').value.trim(),
+                version: document.getElementById('game-version').value.trim(),
+                uploader: username,
+                createdAt: new Date().toISOString()
+            };
 
-                    pendingGames.push(newGame);
-                    localStorage.setItem('voxy_pending_games', JSON.stringify(pendingGames));
-
-                    msg.style.color = '#51cf66';
-                    msg.textContent = 'تم إرسال اللعبة للأدمين بنجاح! في انتظار الموافقة والنشر.';
-
-                    setTimeout(() => {
-                        window.location.href = 'store.html';
-                    }, 2000);
-                };
-                reader.readAsDataURL(iconFile);
+            try {
+                await db.collection('pending_games').add(gameData);
+                alert('تم إرسال اللعبة بنجاح! سينظر فيها الأدمين قريباً.');
+                window.location.href = 'store.html';
+            } catch (err) {
+                alert('حدث خطأ أثناء الإرسال: ' + err.message);
+                btn.disabled = false;
+                btn.textContent = 'إرسال للمراجعة';
             }
         });
     </script>

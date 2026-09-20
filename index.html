@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>متجر Voxy - تسجيل الحساب</title>
+    <title>تسجيل الدخول - متجر Voxy</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -15,11 +15,11 @@
             height: 100vh;
             margin: 0;
         }
-        .container {
+        .login-card {
             background-color: #1e1e1e;
             padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             width: 320px;
             text-align: center;
         }
@@ -28,10 +28,10 @@
             width: 100%;
             padding: 10px;
             margin: 10px 0;
-            border: 1px solid #444;
+            border: 1px solid #333;
+            border-radius: 5px;
             background-color: #2a2a2a;
             color: #fff;
-            border-radius: 5px;
             box-sizing: border-box;
         }
         button {
@@ -46,80 +46,100 @@
             margin-top: 10px;
         }
         button:hover { background-color: #007e85; }
-        .message { margin-top: 15px; font-size: 14px; }
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: #00adb5;
+            cursor: pointer;
+            margin-top: 15px;
+            font-size: 13px;
+        }
     </style>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
-    <div class="container">
-        <h2>متجر Voxy</h2>
-        <form id="signup-form">
-            <input type="text" id="username" placeholder="اسم المستخدم" required>
-            <input type="password" id="password" placeholder="كلمة المرور" required>
-            <button type="submit">دخول / إنشاء حساب</button>
-        </form>
-        <div class="message" id="msg"></div>
+    <div class="login-card">
+        <h2 id="form-title">تسجيل الدخول</h2>
+        <input type="text" id="username" placeholder="اسم المستخدم" required>
+        <input type="password" id="password" placeholder="كلمة المرور" required>
+        <button id="submit-btn" onclick="handleSubmit()">دخول</button>
+        <button class="toggle-btn" onclick="toggleMode()" id="toggle-text">ليس لديك حساب؟ إنشاء حساب جديد</button>
     </div>
 
     <script>
-        const form = document.getElementById('signup-form');
-        const usernameInput = document.getElementById('username');
-        const passwordInput = document.getElementById('password');
-        const msg = document.getElementById('msg');
-
-        window.onload = function() {
-            const savedUser = localStorage.getItem('voxy_username');
-            const role = localStorage.getItem('voxy_role');
-            if (savedUser) {
-                if (role === 'super_admin' || role === 'admin') {
-                    window.location.href = 'admin.html';
-                } else {
-                    window.location.href = 'store.html';
-                }
-            }
+        const firebaseConfig = {
+            apiKey: "AIzaSyAIU9w0_A9ba4agXyFIqAFZ_YpWV06sQGo",
+            authDomain: "voxy-store.firebaseapp.com",
+            projectId: "voxy-store",
+            storageBucket: "voxy-store.firebasestorage.app",
+            messagingSenderId: "21920174610",
+            appId: "1:21920174610:web:29eeff5eda3aa5e4d6becb"
         };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const username = usernameInput.value.trim();
-            const password = passwordInput.value;
+        let isSignUp = false;
 
-            let role = 'user';
+        function toggleMode() {
+            isSignUp = !isSignUp;
+            document.getElementById('form-title').textContent = isSignUp ? "حساب جديد" : "تسجيل الدخول";
+            document.getElementById('submit-btn').textContent = isSignUp ? "إنشاء حساب" : "دخول";
+            document.getElementById('toggle-text').textContent = isSignUp ? "لديك حساب بالفعل؟ تسجيل الدخول" : "ليس لديك حساب؟ إنشاء حساب جديد";
+        }
 
-            // التحقق من بيانات السوبر أدمين السرية
-            if (username === 'AdminSuper123789' && password === 'adminsupersuper543×513×876×943Secret') {
-                role = 'super_admin';
-            } else {
-                // التحقق هل هو أدمين عادي تم ترقيته مسبقاً؟
-                let admins = JSON.parse(localStorage.getItem('voxy_admins')) || [];
-                if (admins.includes(username)) {
-                    role = 'admin';
-                } else {
-                    // حفظ المستخدم الجديد في قائمة المستخدمين لتظهر عند الأدمين
-                    let users = JSON.parse(localStorage.getItem('voxy_users_list')) || [];
-                    if (!users.includes(username)) {
-                        users.push(username);
-                        localStorage.setItem('voxy_users_list', JSON.stringify(users));
-                    }
-                }
+        async function handleSubmit() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!username || !password) {
+                alert("يرجى ملء كافة الحقول!");
+                return;
             }
 
-            // حفظ بيانات الجلسة الحالية
-            localStorage.setItem('voxy_username', username);
-            localStorage.setItem('voxy_role', role);
+            // حساب السوبر أدمين الثابت
+            if (username === "superadmin" && password === "super123") {
+                localStorage.setItem('voxy_username', 'superadmin');
+                localStorage.setItem('voxy_role', 'super_admin');
+                window.location.href = "admin.html";
+                return;
+            }
 
-            msg.style.color = '#51cf66';
-            msg.textContent = 'تم تسجيل الدخول بنجاح، جاري التحويل...';
+            const userRef = db.collection('users').doc(username);
+            const userDoc = await userRef.get();
 
-            setTimeout(() => {
-                if (role === 'super_admin' || role === 'admin') {
-                    window.location.href = 'admin.html';
-                } else {
-                    window.location.href = 'store.html';
+            if (isSignUp) {
+                if (userDoc.exists) {
+                    alert("اسم المستخدم هذا مأخوذ بالفعل!");
+                    return;
                 }
-            }, 1000);
-        });
+                await userRef.set({
+                    username: username,
+                    password: password,
+                    role: 'user'
+                });
+                localStorage.setItem('voxy_username', username);
+                localStorage.setItem('voxy_role', 'user');
+                alert("تم إنشاء الحساب بنجاح!");
+                window.location.href = "store.html";
+            } else {
+                if (!userDoc.exists || userDoc.data().password !== password) {
+                    alert("اسم المستخدم أو كلمة المرور غير صحيحة!");
+                    return;
+                }
+                const userData = userDoc.data();
+                localStorage.setItem('voxy_username', username);
+                localStorage.setItem('voxy_role', userData.role || 'user');
+                
+                if (userData.role === 'admin' || userData.role === 'super_admin') {
+                    window.location.href = "admin.html";
+                } else {
+                    window.location.href = "store.html";
+                }
+            }
+        }
     </script>
-
 </body>
 </html>
