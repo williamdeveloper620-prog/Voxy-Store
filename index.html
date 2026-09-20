@@ -12,8 +12,10 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
         }
         .login-card {
             background-color: #1e1e1e;
@@ -27,7 +29,7 @@
         input {
             width: 100%;
             padding: 10px;
-            margin: 10px 0;
+            margin: 8px 0;
             border: 1px solid #333;
             border-radius: 5px;
             background-color: #2a2a2a;
@@ -54,6 +56,14 @@
             margin-top: 15px;
             font-size: 13px;
         }
+        .admin-proof-group {
+            margin-top: 5px;
+            text-align: right;
+        }
+        .admin-proof-group label {
+            font-size: 12px;
+            color: #aaa;
+        }
     </style>
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -65,6 +75,12 @@
         <h2 id="form-title">تسجيل الدخول</h2>
         <input type="text" id="username" placeholder="اسم المستخدم" required>
         <input type="password" id="password" placeholder="كلمة المرور" required>
+        
+        <div class="admin-proof-group">
+            <label>إثبات أدمين (اتركه فارغاً للمستخدم العادي):</label>
+            <input type="text" id="admin-proof" placeholder="رمز إثبات الأدمين">
+        </div>
+
         <button id="submit-btn" onclick="handleSubmit()">دخول</button>
         <button class="toggle-btn" onclick="toggleMode()" id="toggle-text">ليس لديك حساب؟ إنشاء حساب جديد</button>
     </div>
@@ -83,6 +99,9 @@
 
         let isSignUp = false;
 
+        const SUPER_ADMIN_KEY = "AdminSuperAdminX123@#$&+";
+        const ADMIN_REQUEST_KEY = "Admin123Admin+/+. /";
+
         function toggleMode() {
             isSignUp = !isSignUp;
             document.getElementById('form-title').textContent = isSignUp ? "حساب جديد" : "تسجيل الدخول";
@@ -93,17 +112,10 @@
         async function handleSubmit() {
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
+            const adminProof = document.getElementById('admin-proof').value.trim();
 
             if (!username || !password) {
-                alert("يرجى ملء كافة الحقول!");
-                return;
-            }
-
-            // حساب السوبر أدمين الثابت
-            if (username === "superadmin" && password === "super123") {
-                localStorage.setItem('voxy_username', 'superadmin');
-                localStorage.setItem('voxy_role', 'super_admin');
-                window.location.href = "admin.html";
+                alert("يرجى إدخال اسم المستخدم وكلمة المرور!");
                 return;
             }
 
@@ -115,25 +127,70 @@
                     alert("اسم المستخدم هذا مأخوذ بالفعل!");
                     return;
                 }
+
+                let assignedRole = 'user';
+                let adminStatus = 'approved';
+
+                if (adminProof === SUPER_ADMIN_KEY) {
+                    assignedRole = 'super_admin';
+                } else if (adminProof === ADMIN_REQUEST_KEY) {
+                    assignedRole = 'admin';
+                    adminStatus = 'pending'; // ينتظر موافقة السوبر أدمين
+                } else if (adminProof !== "") {
+                    alert("رمز إثبات الأدمين غير صحيح!");
+                    return;
+                }
+
                 await userRef.set({
                     username: username,
                     password: password,
-                    role: 'user'
+                    role: assignedRole,
+                    adminStatus: adminStatus
                 });
+
                 localStorage.setItem('voxy_username', username);
-                localStorage.setItem('voxy_role', 'user');
-                alert("تم إنشاء الحساب بنجاح!");
-                window.location.href = "store.html";
+                localStorage.setItem('voxy_role', assignedRole);
+
+                if (assignedRole === 'super_admin') {
+                    alert("تم إنشاء حسابك كـ سوبر أدمين بنجاح!");
+                    window.location.href = "admin.html";
+                } else if (assignedRole === 'admin' && adminStatus === 'pending') {
+                    alert("تم إرسال طلب ترقية الأدمين للسوبر أدمين للمراجعة. يمكنك تصفح المتجر كمستخدم لحين الموافقة!");
+                    window.location.href = "store.html";
+                } else {
+                    alert("تم إنشاء الحساب بنجاح!");
+                    window.location.href = "store.html";
+                }
+
             } else {
                 if (!userDoc.exists || userDoc.data().password !== password) {
                     alert("اسم المستخدم أو كلمة المرور غير صحيحة!");
                     return;
                 }
-                const userData = userDoc.data();
+
+                let userData = userDoc.data();
+                let currentRole = userData.role || 'user';
+                let currentStatus = userData.adminStatus || 'approved';
+
+                // إذا أرفق رمز السوبر أدمين أثناء الدخول يتم ترقيته مباشرة لسوبر أدمين
+                if (adminProof === SUPER_ADMIN_KEY) {
+                    currentRole = 'super_admin';
+                    currentStatus = 'approved';
+                    await userRef.update({ role: 'super_admin', adminStatus: 'approved' });
+                } else if (adminProof === ADMIN_REQUEST_KEY && currentRole !== 'super_admin' && currentRole !== 'admin') {
+                    currentRole = 'admin';
+                    currentStatus = 'pending';
+                    await userRef.update({ role: 'admin', adminStatus: 'pending' });
+                    alert("تم تقديم طلب الأدمين للانتظار لموافقة السوبر أدمين!");
+                } else if (adminProof !== "" && adminProof !== SUPER_ADMIN_KEY && adminProof !== ADMIN_REQUEST_KEY) {
+                    alert("رمز إثبات الأدمين غير صحيح!");
+                    return;
+                }
+
                 localStorage.setItem('voxy_username', username);
-                localStorage.setItem('voxy_role', userData.role || 'user');
-                
-                if (userData.role === 'admin' || userData.role === 'super_admin') {
+                localStorage.setItem('voxy_role', currentRole);
+
+                if (currentRole === 'super_admin' || (currentRole === 'admin' && currentStatus === 'approved')) {
                     window.location.href = "admin.html";
                 } else {
                     window.location.href = "store.html";
